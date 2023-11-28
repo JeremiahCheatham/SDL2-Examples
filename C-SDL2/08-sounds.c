@@ -66,7 +66,7 @@ int main() {
     }
 
     if (Mix_PlayMusic(game.music, -1)) {
-        fprintf(stderr, "RUNTIME_ERROR: MIX_PlayMusic TRACEBACK: %s\n", Mix_GetError());
+        fprintf(stderr, "Error playing music: %s\n", Mix_GetError());
         game_cleanup(&game);
     }
 
@@ -100,6 +100,7 @@ int main() {
             }
         }
 
+        // Update all objects here.
         text_update(&game);
         sprite_update(&game);
 
@@ -141,35 +142,35 @@ void game_cleanup(struct Game *game) {
 
 bool sdl_initialize(struct Game *game) {
     if (SDL_Init(SDL_INIT_EVERYTHING)) {
-        fprintf(stderr, "RUNTIME_ERROR: SDL2_Init TRACEBACK: %s\n", SDL_GetError());
+        fprintf(stderr, "Error initializing SDL: %s\n", SDL_GetError());
         return true;
     }
 
     int img_init = IMG_Init(IMAGE_FLAGS);
     if ((img_init & IMAGE_FLAGS) != IMAGE_FLAGS) {
-        fprintf(stderr, "RUNTIME_ERROR: SDL2_Init TRACEBACK: %s\n", SDL_GetError());
+        fprintf(stderr, "Error initializing SDL_image: %s\n", IMG_GetError());
         return true;
     }
 
     if (TTF_Init()) {
-        fprintf(stderr, "RUNTIME_ERROR: TTF_Init TRACEBACK: %s\n", SDL_GetError());
+        fprintf(stderr, "Error initializing SDL_ttf: %s\n", TTF_GetError());
         return true;
     }
 
     if( Mix_OpenAudio( 44100, MIX_DEFAULT_FORMAT, 2, 1024 ) < 0 ) {
-        fprintf(stderr, "RUNTIME_ERROR: Mix_OpenAudio TRACEBACK: %s\n", Mix_GetError());
+        fprintf(stderr, "Error initializing SDL_mixer: %s\n", Mix_GetError());
         return true;
     }
 
     game->window = SDL_CreateWindow(WINDOW_TITLE, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH, SCREEN_HEIGHT, 0);
     if (!game->window){
-        fprintf(stderr, "RUNTIME_ERROR: SDL2_CreateWindow TRACEBACK: %s\n", SDL_GetError());
+        fprintf(stderr, "Error creating window: %s\n", SDL_GetError());
         return true;
     }
 
     game->renderer = SDL_CreateRenderer(game->window, -1, 0);
     if (!game->renderer){
-        fprintf(stderr, "RUNTIME_ERROR: SDL2_CreateRenderer TRACEBACK: %s\n", SDL_GetError());
+        fprintf(stderr, "Error creating renderer: %s\n", SDL_GetError());
         return true;
     }
 
@@ -181,19 +182,19 @@ bool sdl_initialize(struct Game *game) {
 bool load_media(struct Game *game) {
     game->background = IMG_LoadTexture(game->renderer, "images/background.png");
     if (!game->background){
-        fprintf(stderr, "RUNTIME_ERROR: SDL2_CreateImage TRACEBACK: %s\n", SDL_GetError());
+        fprintf(stderr, "Error creating a texture: %s\n", IMG_GetError());
         return true;
     }
 
     game->text_font = TTF_OpenFont("fonts/freesansbold.ttf", TEXT_SIZE);
     if (!game->text_font){
-        fprintf(stderr, "RUNTIME_ERROR: TTF_CreateFont TRACEBACK: %s\n", TTF_GetError());
+        fprintf(stderr, "Error creating a font: %s\n", TTF_GetError());
         return true;
     }
 
     SDL_Surface *surface = TTF_RenderText_Blended(game->text_font, "SDL", game->text_color );
     if (!surface){
-        fprintf(stderr, "RUNTIME_ERROR: TTF_CreateSurface TRACEBACK: %s\n", TTF_GetError());
+        fprintf(stderr, "Error creating surface from string: %s\n", TTF_GetError());
         return true;
     } else {
         game->text_rect.w = surface->w;
@@ -202,37 +203,37 @@ bool load_media(struct Game *game) {
         SDL_FreeSurface(surface);
         surface = NULL;
         if (!game->text_image){
-            fprintf(stderr, "RUNTIME_ERROR: SDL_CreateTextureFromSurface TRACEBACK: %s\n", TTF_GetError());
+            fprintf(stderr, "Error creating texure from surface: %s\n", SDL_GetError());
             return true;
         }
     }
 
     game->sprite_image = IMG_LoadTexture(game->renderer, "images/C-logo.png");
     if (!game->sprite_image) {
-        fprintf(stderr, "RUNTIME_ERROR: SDL2_CreateImage TRACEBACK: %s\n", SDL_GetError());
+        fprintf(stderr, "Error creating a texture: %s\n", IMG_GetError());
         return true;
     }
 
     if (SDL_QueryTexture(game->sprite_image, NULL, NULL, &game->sprite_rect.w, &game->sprite_rect.h)) {
-        fprintf(stderr, "RUNTIME_ERROR: SDL2_QueryImage TRACEBACK: %s\n", SDL_GetError());
+        fprintf(stderr, "Error querying texture: %s\n", SDL_GetError());
         return true;
     }
 
     game->music = Mix_LoadMUS( "music/freesoftwaresong-8bit.ogg" );
     if(!game->music) {
-        fprintf(stderr, "RUNTIME_ERROR: Mix_LoadMUS TRACEBACK: %s\n", Mix_GetError());
+        fprintf(stderr, "Failed to load music: %s\n", Mix_GetError());
         return true;
     }
 
     game->sdl_sound = Mix_LoadWAV("sounds/SDL.ogg");
     if(!game->sdl_sound) {
-        fprintf(stderr, "RUNTIME_ERROR: Mix_LoadWAV TRACEBACK: %s\n", Mix_GetError());
+        fprintf(stderr, "Failed to load sound effect: %s\n", Mix_GetError());
         return true;
     }
 
     game->c_sound = Mix_LoadWAV("sounds/C.ogg");
     if(!game->c_sound) {
-        fprintf(stderr, "RUNTIME_ERROR: Mix_LoadWAV TRACEBACK: %s\n", Mix_GetError());
+        fprintf(stderr, "Failed to load sound effect: %s\n", Mix_GetError());
         return true;
     }
 
