@@ -7,7 +7,7 @@
 #include <SDL2/SDL_ttf.h>
 #include <SDL2/SDL_mixer.h>
 
-#define WINDOW_TITLE "08 Sounds"
+#define WINDOW_TITLE "07 Music"
 #define SCREEN_WIDTH 800
 #define SCREEN_HEIGHT 600
 #define IMAGE_FLAGS IMG_INIT_PNG
@@ -28,8 +28,6 @@ struct Game {
     int sprite_vel;
     const Uint8 *keystate;
     Mix_Music *music;
-    Mix_Chunk *c_sound;
-    Mix_Chunk *sdl_sound;
 };
 
 bool sdl_initialize(struct Game *game);
@@ -52,8 +50,6 @@ int main() {
         .sprite_image = NULL,
         .sprite_vel = 3,
         .music = NULL,
-        .c_sound = NULL,
-        .sdl_sound = NULL,
     };
 
     if (sdl_initialize(&game)) {
@@ -82,7 +78,6 @@ int main() {
                             game_cleanup(&game);
                         case SDL_SCANCODE_SPACE:
                             SDL_SetRenderDrawColor(game.renderer, rand() % 256, rand() % 256, rand() % 256, 255);
-                            Mix_PlayChannel(-1, game.c_sound, 0);
                             break;
                         case SDL_SCANCODE_M:
                             if (!Mix_PausedMusic()) {
@@ -123,8 +118,6 @@ int main() {
 }
 
 void game_cleanup(struct Game *game) {
-    Mix_FreeChunk(game->c_sound);
-    Mix_FreeChunk(game->sdl_sound);
     Mix_FreeMusic(game->music);
     SDL_DestroyTexture(game->sprite_image);
     TTF_CloseFont(game->text_font);
@@ -224,18 +217,6 @@ bool load_media(struct Game *game) {
         return true;
     }
 
-    game->sdl_sound = Mix_LoadWAV("sounds/SDL.ogg");
-    if(!game->sdl_sound) {
-        fprintf(stderr, "Failed to load sound effect: %s\n", Mix_GetError());
-        return true;
-    }
-
-    game->c_sound = Mix_LoadWAV("sounds/C.ogg");
-    if(!game->c_sound) {
-        fprintf(stderr, "Failed to load sound effect: %s\n", Mix_GetError());
-        return true;
-    }
-
     return false;
 }
 
@@ -244,19 +225,15 @@ void text_update(struct Game *game) {
     game->text_rect.y += game->text_yvel;
     if (game->text_rect.y + game->text_rect.h > SCREEN_HEIGHT){
         game->text_yvel -= game->text_yvel * 2;
-        Mix_PlayChannel(-1, game->sdl_sound, 0);
     }
     if (game->text_rect.x + game->text_rect.w > SCREEN_WIDTH){
         game->text_xvel -= game->text_xvel * 2;
-        Mix_PlayChannel(-1, game->sdl_sound, 0);
     }
     if (game->text_rect.y < 0){
         game->text_yvel -= game->text_yvel * 2;
-        Mix_PlayChannel(-1, game->sdl_sound, 0);
     }
     if (game->text_rect.x < 0){
         game->text_xvel -= game->text_xvel * 2;
-        Mix_PlayChannel(-1, game->sdl_sound, 0);
     }
 }
 

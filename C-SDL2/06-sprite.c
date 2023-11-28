@@ -5,9 +5,8 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_ttf.h>
-#include <SDL2/SDL_mixer.h>
 
-#define WINDOW_TITLE "08 Sounds"
+#define WINDOW_TITLE "06 Sprite"
 #define SCREEN_WIDTH 800
 #define SCREEN_HEIGHT 600
 #define IMAGE_FLAGS IMG_INIT_PNG
@@ -27,9 +26,6 @@ struct Game {
     SDL_Rect sprite_rect;
     int sprite_vel;
     const Uint8 *keystate;
-    Mix_Music *music;
-    Mix_Chunk *c_sound;
-    Mix_Chunk *sdl_sound;
 };
 
 bool sdl_initialize(struct Game *game);
@@ -51,9 +47,6 @@ int main() {
         .keystate = SDL_GetKeyboardState(NULL),
         .sprite_image = NULL,
         .sprite_vel = 3,
-        .music = NULL,
-        .c_sound = NULL,
-        .sdl_sound = NULL,
     };
 
     if (sdl_initialize(&game)) {
@@ -61,11 +54,6 @@ int main() {
     }
 
     if (load_media(&game)) {
-        game_cleanup(&game);
-    }
-
-    if (Mix_PlayMusic(game.music, -1)) {
-        fprintf(stderr, "Error playing music: %s\n", Mix_GetError());
         game_cleanup(&game);
     }
 
@@ -82,14 +70,6 @@ int main() {
                             game_cleanup(&game);
                         case SDL_SCANCODE_SPACE:
                             SDL_SetRenderDrawColor(game.renderer, rand() % 256, rand() % 256, rand() % 256, 255);
-                            Mix_PlayChannel(-1, game.c_sound, 0);
-                            break;
-                        case SDL_SCANCODE_M:
-                            if (!Mix_PausedMusic()) {
-                                Mix_PauseMusic();
-                            } else {
-                                Mix_ResumeMusic();
-                            }
                             break;
                         default:
                             break;
@@ -123,16 +103,12 @@ int main() {
 }
 
 void game_cleanup(struct Game *game) {
-    Mix_FreeChunk(game->c_sound);
-    Mix_FreeChunk(game->sdl_sound);
-    Mix_FreeMusic(game->music);
     SDL_DestroyTexture(game->sprite_image);
     TTF_CloseFont(game->text_font);
     SDL_DestroyTexture(game->text_image);
     SDL_DestroyTexture(game->background);
     SDL_DestroyRenderer(game->renderer);
     SDL_DestroyWindow(game->window);
-    Mix_Quit();
     TTF_Quit();
     IMG_Quit();
     SDL_Quit();
@@ -153,11 +129,6 @@ bool sdl_initialize(struct Game *game) {
 
     if (TTF_Init()) {
         fprintf(stderr, "Error initializing SDL_ttf: %s\n", TTF_GetError());
-        return true;
-    }
-
-    if( Mix_OpenAudio( 44100, MIX_DEFAULT_FORMAT, 2, 1024 ) < 0 ) {
-        fprintf(stderr, "Error initializing SDL_mixer: %s\n", Mix_GetError());
         return true;
     }
 
@@ -218,24 +189,6 @@ bool load_media(struct Game *game) {
         return true;
     }
 
-    game->music = Mix_LoadMUS( "music/freesoftwaresong-8bit.ogg" );
-    if(!game->music) {
-        fprintf(stderr, "Failed to load music: %s\n", Mix_GetError());
-        return true;
-    }
-
-    game->sdl_sound = Mix_LoadWAV("sounds/SDL.ogg");
-    if(!game->sdl_sound) {
-        fprintf(stderr, "Failed to load sound effect: %s\n", Mix_GetError());
-        return true;
-    }
-
-    game->c_sound = Mix_LoadWAV("sounds/C.ogg");
-    if(!game->c_sound) {
-        fprintf(stderr, "Failed to load sound effect: %s\n", Mix_GetError());
-        return true;
-    }
-
     return false;
 }
 
@@ -244,19 +197,15 @@ void text_update(struct Game *game) {
     game->text_rect.y += game->text_yvel;
     if (game->text_rect.y + game->text_rect.h > SCREEN_HEIGHT){
         game->text_yvel -= game->text_yvel * 2;
-        Mix_PlayChannel(-1, game->sdl_sound, 0);
     }
     if (game->text_rect.x + game->text_rect.w > SCREEN_WIDTH){
         game->text_xvel -= game->text_xvel * 2;
-        Mix_PlayChannel(-1, game->sdl_sound, 0);
     }
     if (game->text_rect.y < 0){
         game->text_yvel -= game->text_yvel * 2;
-        Mix_PlayChannel(-1, game->sdl_sound, 0);
     }
     if (game->text_rect.x < 0){
         game->text_xvel -= game->text_xvel * 2;
-        Mix_PlayChannel(-1, game->sdl_sound, 0);
     }
 }
 
