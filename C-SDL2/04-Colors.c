@@ -1,9 +1,9 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdbool.h>
-#include <time.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
 
 #define WINDOW_TITLE "04 Colors"
 #define SCREEN_WIDTH 800
@@ -16,9 +16,9 @@ struct Game {
     SDL_Texture *background;
 };
 
+void game_cleanup(struct Game *game, int exit_status);
+bool load_media(struct Game *game);
 bool sdl_initialize(struct Game *game);
-bool load_media(struct Game *game); 
-void game_cleanup(struct Game *game);
 
 int main() {
     struct Game game = {
@@ -28,61 +28,57 @@ int main() {
     };
 
     if (sdl_initialize(&game)) {
-        game_cleanup(&game);
+        game_cleanup(&game, EXIT_FAILURE);
     }
 
     if (load_media(&game)) {
-        game_cleanup(&game);
+        game_cleanup(&game, EXIT_FAILURE);
     }
 
     while (true) {
         SDL_Event event;
-        while(SDL_PollEvent(&event)) {
+        while (SDL_PollEvent(&event)) {
             switch (event.type) {
-                case SDL_QUIT:
-                    game_cleanup(&game);
+            case SDL_QUIT:
+                game_cleanup(&game, EXIT_SUCCESS);
+                break;
+            case SDL_KEYDOWN:
+                switch (event.key.keysym.scancode) {
+                case SDL_SCANCODE_ESCAPE:
+                    game_cleanup(&game, EXIT_SUCCESS);
                     break;
-                case SDL_KEYDOWN:
-                    switch (event.key.keysym.scancode) {
-                        case SDL_SCANCODE_ESCAPE:
-                            game_cleanup(&game);
-                        case SDL_SCANCODE_SPACE:
-                            SDL_SetRenderDrawColor(game.renderer, rand() % 256, rand() % 256, rand() % 256, 255);
-                            break;
-                        default:
-                            break;
-                    }
+                case SDL_SCANCODE_SPACE:
+                    SDL_SetRenderDrawColor(game.renderer, rand() % 256,
+                                           rand() % 256, rand() % 256, 255);
+                    break;
                 default:
                     break;
+                }
+            default:
+                break;
             }
         }
-
-        // Update all objects here.
-
-        // Clears the back screen buffer.
         SDL_RenderClear(game.renderer);
 
-        // Do all your drawing here.
         SDL_RenderCopy(game.renderer, game.background, NULL, NULL);
 
-        // Flips the front and back buffers, displays what has been drawn.
         SDL_RenderPresent(game.renderer);
 
         SDL_Delay(16);
     }
 
-    game_cleanup(&game);
+    game_cleanup(&game, EXIT_SUCCESS);
 
     return 0;
 }
 
-void game_cleanup(struct Game *game) {
+void game_cleanup(struct Game *game, int exit_status) {
     SDL_DestroyTexture(game->background);
     SDL_DestroyRenderer(game->renderer);
     SDL_DestroyWindow(game->window);
     IMG_Quit();
     SDL_Quit();
-    exit(0);
+    exit(exit_status);
 }
 
 bool sdl_initialize(struct Game *game) {
@@ -97,30 +93,31 @@ bool sdl_initialize(struct Game *game) {
         return true;
     }
 
-    game->window = SDL_CreateWindow(WINDOW_TITLE, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH, SCREEN_HEIGHT, 0);
-    if (!game->window){
+    game->window = SDL_CreateWindow(WINDOW_TITLE, SDL_WINDOWPOS_CENTERED,
+                                    SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH,
+                                    SCREEN_HEIGHT, 0);
+    if (!game->window) {
         fprintf(stderr, "Error creating window: %s\n", SDL_GetError());
         return true;
     }
 
     game->renderer = SDL_CreateRenderer(game->window, -1, 0);
-    if (!game->renderer){
+    if (!game->renderer) {
         fprintf(stderr, "Error creating renderer: %s\n", SDL_GetError());
         return true;
     }
 
-    srand((Uint32)time(NULL));
+    srand((unsigned)time(NULL));
 
     return false;
 }
 
 bool load_media(struct Game *game) {
     game->background = IMG_LoadTexture(game->renderer, "images/background.png");
-    if (!game->background){
-        fprintf(stderr, "Error creating a texture: %s\n", IMG_GetError());
+    if (!game->background) {
+        fprintf(stderr, "Error creating Texture: %s\n", IMG_GetError());
         return true;
     }
 
     return false;
 }
-
